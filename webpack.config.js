@@ -1,65 +1,78 @@
-/**
- * Created by ranwei on 2017/7/10.
- */
 
-var path=require('path');
+var path = require('path')
+var webpack = require('webpack')
 
-module.exports={
-    entry:'./js/index.js',
-    output:{
-        filename:'bundles.js',
-        path:path.resolve(__dirname,'dist')
+module.exports = {
+    entry: {
+        'index': './src/js/index.js'
     },
-    module:{
-        rules:[
+    output: {
+        path: path.resolve(__dirname, './dist'),
+        publicPath: '/dist/',
+        filename: '[name].js'
+    },
+    module: {
+        rules: [
             {
-                //加载css
-                test:/\.css$/,
-                use:[
-                    'style-loader',
-                    'css-loader'
-                ]
-            },
-            {
-                test:/\.js$/,
-                use:[
-                    {
-                        loader:'babel-loader',
-                        options:{
-                            presets:['es2015'],
-                            plugins:['transform-object-rest-spread']
-                        }
+                test: /\.vue$/,
+                loader: 'vue-loader',
+                options: {
+                    loaders: {
+                        // Since sass-loader (weirdly) has SCSS as its default parse mode, we map
+                        // the "scss" and "sass" values for the lang attribute to the right configs here.
+                        // other preprocessors should work out of the box, no loader config like this necessary.
+                        'scss': 'vue-style-loader!css-loader!sass-loader',
+                        'sass': 'vue-style-loader!css-loader!sass-loader?indentedSyntax'
                     }
-                ],
-                exclude:/node_modules/
+                    // other vue-loader options go here
+                }
             },
             {
-                test:/\.(png|jpg)$/,
-                use:'file-loader'
+                test: /\.js$/,
+                loader: 'babel-loader',
+                exclude: /node_modules/
             },
             {
-                //加载Vue
-                test:/\.vue$/,
-                use:[{
-                    loader:'vue-loader',
-                    options:{
-                        loaders:{
-                            js:'babel-loader?{"presets":["es2015"],"plugins": ["transform-object-rest-spread"]}',
-                            css:'vue-style-loader!css-loader'
-                        }
-                    }
-                }],
-                exclude:/node_modules/
+                test: /\.(png|jpg|gif|svg)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[name].[ext]?[hash]'
+                }
             }
         ]
     },
-    resolve:{
-        extensions:[
-            'js',
-            'vue'
-        ],
-        alias:{
-            vue:resolve(__dirname,'node_modules','vue','dist','vue.min.js')
+    resolve: {
+        alias: {
+            'vue$': 'vue/dist/vue.esm.js'
         }
-    }
-};
+    },
+    devServer: {
+        historyApiFallback: true,
+        noInfo: true
+    },
+    performance: {
+        hints: false
+    },
+    devtool: '#eval-source-map'
+}
+
+if (process.env.NODE_ENV === 'production') {
+    module.exports.devtool = '#source-map'
+    // http://vue-loader.vuejs.org/en/workflow/production.html
+    module.exports.plugins = (module.exports.plugins || []).concat([
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV: '"production"'
+            }
+        }),
+        //new webpack.optimize.UglifyJsPlugin({
+        //    sourceMap: true,
+        //    compress: {
+        //        warnings: false
+        //    }
+        //}),
+        new webpack.LoaderOptionsPlugin({
+            minimize: true
+        })
+    ])
+}
